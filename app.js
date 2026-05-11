@@ -65,12 +65,15 @@ function loadCustomColors() {
     ? saved.map((color) => normalizeColor(color, null)).filter(Boolean)
     : [];
 
-  paletteColors = [...new Set([...DEFAULT_COLORS, ...validSaved])];
+  if (validSaved.length >= DEFAULT_COLORS.length) {
+    paletteColors = [...new Set(validSaved)];
+  } else {
+    paletteColors = [...new Set([...DEFAULT_COLORS, ...validSaved])];
+  }
 }
 
 function saveCustomColors() {
-  const customOnly = paletteColors.filter((color) => !DEFAULT_COLORS.includes(color));
-  localStorage.setItem(CUSTOM_COLORS_KEY, JSON.stringify(customOnly));
+  localStorage.setItem(CUSTOM_COLORS_KEY, JSON.stringify(paletteColors));
 }
 
 function normalizeEvent(event) {
@@ -316,7 +319,7 @@ function drawClockFace() {
       y1: 0,
       x2: end.x.toFixed(2),
       y2: end.y.toFixed(2),
-      class: `hour-line ${i % 6 === 0 ? "major" : ""}`,
+      class: `hour-line ${i % 6 === 0 ? "major" : i % 6 === 3 ? "diagonal" : ""}`,
     });
 
     svg.appendChild(line);
@@ -400,20 +403,43 @@ function updateCustomColorPreview() {
 }
 
 function renderColorPalette() {
-  colorPalette.querySelectorAll(".color-swatch").forEach((swatch) => swatch.remove());
+  colorPalette.querySelectorAll(".palette-color-wrap").forEach((swatch) => swatch.remove());
 
   paletteColors.forEach((color) => {
-    const button = document.createElement("button");
+    const wrap = document.createElement("div");
+    wrap.className = "palette-color-wrap";
 
+    const button = document.createElement("button");
     button.type = "button";
     button.className = "color-swatch";
     button.style.backgroundColor = color;
     button.dataset.color = color;
     button.setAttribute("aria-label", color);
     button.setAttribute("aria-pressed", String(colorInput.value.toLowerCase() === color.toLowerCase()));
-    button.addEventListener("click", () => setCurrentColor(color));
 
-    colorPalette.insertBefore(button, customColorBox);
+    const editor = document.createElement("input");
+    editor.type = "color";
+    editor.className = "palette-color-editor";
+    editor.value = color;
+    editor.setAttribute("aria-label", "기본 색상 수정");
+
+    button.addEventListener("click", () => {
+      const isAlreadySelected = colorInput.value.toLowerCase() === color.toLowerCase();
+
+      if (isAlreadySelected) {
+        editor.click();
+        return;
+      }
+
+      setCurrentColor(color);
+    });
+
+    editor.addEventListener("input", () => {
+      replacePaletteColor(color, editor.value);
+    });
+
+    wrap.append(button, editor);
+    colorPalette.insertBefore(wrap, customColorBox);
   });
 }
 
@@ -446,6 +472,40 @@ function addCustomColor(color) {
   }
 
   setCurrentColor(normalized);
+}
+
+function replacePaletteColor(oldColor, newColor, options = {}) {
+  const oldNormalized = normalizeColor(oldColor, null);
+  const newNormalized = normalizeColor(newColor, null);
+
+  if (!oldNormalized || !newNormalized) return;
+
+  const oldIndex = paletteColors.indexOf(oldNormalized);
+  const existingIndex = paletteColors.indexOf(newNormalized);
+
+  if (oldIndex !== -1) {
+    if (existingIndex !== -1 && existingIndex !== oldIndex) {
+      paletteColors.splice(oldIndex, 1);
+    } else {
+      paletteColors[oldIndex] = newNormalized;
+    }
+
+    saveCustomColors();
+  }
+
+  if (options.eventId) {
+    const target = events.find((event) => event.id === options.eventId);
+    if (target) {
+      target.color = newNormalized;
+      selectedId = target.id;
+      saveEvents();
+      fillFormFromEvent(target);
+    }
+  } else {
+    setCurrentColor(newNormalized, false);
+  }
+
+  render();
 }
 
 function renderSummary() {
@@ -570,24 +630,68 @@ function renderEventList() {
       colorWrap.appendChild(colorButton);
 
       if (openColorMenuId === event.id) {
-        const menu = document.createElement("div");
-        menu.className = "list-color-menu";
+  const menu = document.createElement("div");
+  menu.className = "list-color-menu";
 
-        paletteColors.forEach((color) => {
-          const menuButton = document.createElement("button");
+  paletteColors.forEach((color) => {
+    const miniWrap = document.createElement("div");
+    miniWrap.className = "mini-color-wrap";
 
-          menuButton.type = "button";
-          menuButton.className = "mini-color-swatch";
-          menuButton.style.backgroundColor = color;
-          menuButton.setAttribute("aria-label", color);
-          menuButton.setAttribute("aria-pressed", String(event.color === color));
-          menuButton.addEventListener("click", () => updateEventColor(event.id, color));
+    const menuButton = document.createElement("button");
+    menuButton.type = "button";
+    menuButton.className = "mini-color-swatch";
+    menuButton.style.backgroundColor = color;
+    menuButton.setAttribute("aria-label", color);
+    menuButton.setAttribute("aria-pressed", String(event.color === color));
 
-          menu.appendChild(menuButton);
-        });
+    const editor = document.createElement("input");
+    editor.type = "color";
+    editor.className = "mini-color-editor";
+    editor.value = color;
+    editor.setAttribute("aria-label", "고정 색상 수정");
 
-        colorWrap.appendChild(menu);
+    menuButton.addEventListener("click", () => {
+      const isAlreadySelected = event.color.toLowerCase() === color.toLowerCase();
+
+      if (isAlreadySelected) {
+        editor.click();
+        return;
       }
+
+      updateEventColor(event.id, color);
+    });
+
+    editor.addEventListener("input", () => {
+      replacePaletteColor(color, editor.value, { eventId: event.id });
+    });
+
+    miniWrap.append(menuButton, editor);
+    menu.appendChild(miniWrap);
+  });
+
+  const oneTimeColor = document.createElement("label");
+  oneTimeColor.className = "mini-custom-color-box";
+  oneTimeColor.style.setProperty("--mini-custom-preview", event.color);
+  oneTimeColor.setAttribute("aria-label", "일회용 색상 만들기");
+
+  const oneTimeInput = document.createElement("input");
+  oneTimeInput.type = "color";
+  oneTimeInput.value = event.color;
+
+  const plus = document.createElement("span");
+  plus.textContent = "+";
+  plus.setAttribute("aria-hidden", "true");
+
+  oneTimeInput.addEventListener("input", () => {
+    oneTimeColor.style.setProperty("--mini-custom-preview", oneTimeInput.value);
+    updateEventColor(event.id, oneTimeInput.value);
+  });
+
+  oneTimeColor.append(oneTimeInput, plus);
+  menu.appendChild(oneTimeColor);
+
+  colorWrap.appendChild(menu);
+}
 
       const titleEdit = document.createElement("input");
       titleEdit.type = "text";
