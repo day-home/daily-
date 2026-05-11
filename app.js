@@ -1,20 +1,36 @@
 const svg = document.querySelector("#plannerSvg");
 const dateInput = document.querySelector("#dateInput");
 const eventForm = document.querySelector("#eventForm");
+const formTitle = document.querySelector("#formTitle");
 const titleInput = document.querySelector("#titleInput");
 const startInput = document.querySelector("#startInput");
 const endInput = document.querySelector("#endInput");
 const colorInput = document.querySelector("#colorInput");
+const colorPalette = document.querySelector("#colorPalette");
+const customColorInput = document.querySelector("#customColorInput");
+const addColorButton = document.querySelector("#addColorButton");
+const submitButton = document.querySelector("#submitButton");
 const summaryList = document.querySelector("#summaryList");
 const eventList = document.querySelector("#eventList");
 const clearButton = document.querySelector("#clearButton");
 const deleteButton = document.querySelector("#deleteButton");
 
 const RADIUS = 238;
-const SNAP_MINUTES = 5;
+const SNAP_MINUTES = 10;
 const STORAGE_PREFIX = "haru-wonpan:";
+const CUSTOM_COLORS_KEY = `${STORAGE_PREFIX}custom-colors`;
+
+const DEFAULT_COLORS = [
+  "#e6ddfb",
+  "#e1edfc",
+  "#f8d5eb",
+  "#feff91",
+  "#f5c6c4",
+  "#f1f1f1",
+];
 
 let events = [];
+let paletteColors = [...DEFAULT_COLORS];
 let draft = null;
 let dragStart = null;
 let selectedId = null;
@@ -29,19 +45,51 @@ function storageKey() {
   return `${STORAGE_PREFIX}${dateInput.value}`;
 }
 
-function loadEvents() {
+function safeJsonParse(value, fallback) {
   try {
-    events = JSON.parse(localStorage.getItem(storageKey()) || "[]");
+    return JSON.parse(value) ?? fallback;
   } catch {
-    events = [];
+    return fallback;
   }
+}
+
+function loadCustomColors() {
+  const saved = safeJsonParse(localStorage.getItem(CUSTOM_COLORS_KEY), []);
+  const validSaved = saved.filter((color) => /^#[0-9a-f]{6}$/i.test(color));
+  paletteColors = [...new Set([...DEFAULT_COLORS, ...validSaved.map((color) => color.toLowerCase())])];
+}
+
+function saveCustomColors() {
+  const customOnly = paletteColors.filter((color) => !DEFAULT_COLORS.includes(color));
+  localStorage.setItem(CUSTOM_COLORS_KEY, JSON.stringify(customOnly));
+}
+
+function normalizeEvent(event) {
+  return {
+    id: event.id || createId(),
+    title: typeof event.title === "string" ? event.title : "새 일정",
+    start: Number.isFinite(event.start) ? event.start : 480,
+    end: Number.isFinite(event.end) ? event.end : 540,
+    color: /^#[0-9a-f]{6}$/i.test(event.color || "") ? event.color.toLowerCase() : DEFAULT_COLORS[0],
+  };
+}
+
+function loadEvents() {
+  const saved = safeJsonParse(localStorage.getItem(storageKey()), []);
+  events = Array.isArray(saved) ? saved.map(normalizeEvent) : [];
   selectedId = null;
   draft = null;
+  resetForm(false);
   render();
 }
 
 function saveEvents() {
   localStorage.setItem(storageKey(), JSON.stringify(events));
+}
+
+function createId() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 function createSvgElement(tag, attrs = {}) {
@@ -123,7 +171,9 @@ function minutesFromPointer(event) {
   const point = svg.createSVGPoint();
   point.x = event.clientX;
   point.y = event.clientY;
-  const transformed = point.matrixTransform(svg.getScreenCTM().inverse());
+  const matrix = svg.getScreenCTM();
+  if (!matrix) return 0;
+  const transformed = point.matrixTransform(matrix.inverse());
   let deg = (Math.atan2(transformed.y, transformed.x) * 180) / Math.PI + 90;
   if (deg < 0) deg += 360;
   return snap((deg / 360) * 1440);
@@ -157,14 +207,20 @@ function drawClockFace() {
     svg.appendChild(line);
   }
 
-  for (let i = 0; i < 96; i += 1) {
-    const angle = minutesToAngle(i * 15);
+  for (let i = 0; i < 144; i += 1) {
+    if (i % 6 === 0) continue;
+    const angle = minutesToAngle(i * 10);
     const dot = polar(RADIUS - 7, angle);
-    if (i % 4 !== 0) svg.appendChild(createSvgElement("circle", { cx: dot.x.toFixed(2), cy: dot.y.toFixed(2), r: 1.2, class: "minute-dot" }));
+    svg.appendChild(createSvgElement("circle", {
+      cx: dot.x.toFixed(2),
+      cy: dot.y.toFixed(2),
+      r: 0.9,
+      class: "minute-dot",
+    }));
   }
 
   [0, 6, 12, 18, 3, 9, 15, 21].forEach((hour) => {
-    const position = polar(RADIUS + 28, minutesToAngle(hour * 60));
+    const position = polar(RADIUS + 27, minutesToAngle(hour * 60));
     appendText(`${hour.toString().padStart(2, "0")}:00`, position.x, position.y, "hour-label");
   });
 }
@@ -176,15 +232,15 @@ function drawEvent(event) {
       fill: event.color,
       class: `event-sector ${event.id === selectedId ? "selected" : ""}`,
       "data-id": event.id,
-      opacity: 0.78,
+      opacity: 0.82,
     });
     svg.appendChild(path);
 
     const length = segment.end - segment.start;
-    if (length >= 45) {
+    if (length >= 40) {
       const mid = segment.start + length / 2;
-      const labelPosition = polar(RADIUS * 0.56, minutesToAngle(mid));
-      appendText(event.title, labelPosition.x, labelPosition.y, "event-text");
+      const labelPosition = polar(RADIUS * 0.58, minutesToAngle(mid));
+      appendText(event.title || "새 일정", labelPosition.x, labelPosition.y, "event-text");
     }
   });
 }
@@ -199,12 +255,57 @@ function drawDraft() {
   });
 }
 
+function renderColorPalette() {
+  colorPalette.innerHTML = "";
+
+  paletteColors.forEach((color) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "color-swatch";
+    button.style.backgroundColor = color;
+    button.dataset.color = color;
+    button.setAttribute("aria-label", color);
+    button.setAttribute("aria-pressed", String(colorInput.value.toLowerCase() === color.toLowerCase()));
+    button.addEventListener("click", () => setCurrentColor(color));
+    colorPalette.appendChild(button);
+  });
+}
+
+function setCurrentColor(color, redraw = true) {
+  const normalized = /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : DEFAULT_COLORS[0];
+  colorInput.value = normalized;
+  customColorInput.value = normalized;
+
+  if (draft) draft.color = normalized;
+
+  if (selectedId && !draft) {
+    const selectedEvent = events.find((event) => event.id === selectedId);
+    if (selectedEvent) {
+      selectedEvent.color = normalized;
+      saveEvents();
+    }
+  }
+
+  if (redraw) render();
+  else renderColorPalette();
+}
+
+function addCustomColor(color) {
+  const normalized = /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : null;
+  if (!normalized) return;
+  if (!paletteColors.includes(normalized)) {
+    paletteColors.push(normalized);
+    saveCustomColors();
+  }
+  setCurrentColor(normalized);
+}
+
 function renderSummary() {
   summaryList.innerHTML = "";
   const totals = new Map();
 
   events.forEach((event) => {
-    const key = event.title.trim() || "제목 없음";
+    const key = event.title.trim() || "새 일정";
     const old = totals.get(key) || { minutes: 0, color: event.color };
     old.minutes += durationOf(event);
     totals.set(key, old);
@@ -213,7 +314,7 @@ function renderSummary() {
   if (!totals.size) {
     const empty = document.createElement("li");
     empty.className = "empty-note";
-    empty.textContent = "아직 채운 시간이 없어요. 원판을 드래그해서 첫 일정을 추가해보세요.";
+    empty.textContent = "아직 추가된 일정이 없어요.";
     summaryList.appendChild(empty);
     return;
   }
@@ -223,11 +324,21 @@ function renderSummary() {
     .forEach(([title, total]) => {
       const item = document.createElement("li");
       item.innerHTML = `
-        <span class="list-left"><span class="dot" style="background:${total.color}"></span><span class="list-title">${escapeHtml(title)}</span></span>
+        <span class="list-left"><span class="dot" style="background:${total.color}"></span><span class="summary-title">${escapeHtml(title)}</span></span>
         <span class="summary-time">${formatDuration(total.minutes)}</span>
       `;
       summaryList.appendChild(item);
     });
+}
+
+function fillFormFromEvent(event) {
+  titleInput.value = event.title;
+  startInput.value = formatTime(event.start);
+  endInput.value = formatTime(event.end);
+  setCurrentColor(event.color, false);
+  formTitle.textContent = "일정 수정";
+  submitButton.textContent = "수정하기";
+  deleteButton.hidden = false;
 }
 
 function renderEventList() {
@@ -245,32 +356,71 @@ function renderEventList() {
     .sort((a, b) => a.start - b.start)
     .forEach((event) => {
       const item = document.createElement("li");
-      const button = document.createElement("button");
-      button.type = "button";
-      button.setAttribute("aria-pressed", String(event.id === selectedId));
-      button.innerHTML = `
-        <span class="list-left"><span class="dot" style="background:${event.color}"></span><span class="list-title">${escapeHtml(event.title)}</span></span>
-        <span class="list-time">${formatTime(event.start)}-${formatTime(event.end)}</span>
-      `;
-      button.addEventListener("click", () => selectEvent(event.id));
-      item.appendChild(button);
+      item.className = `event-row ${event.id === selectedId ? "selected" : ""}`;
+
+      const colorPicker = document.createElement("input");
+      colorPicker.type = "color";
+      colorPicker.className = "list-color-picker";
+      colorPicker.value = event.color;
+      colorPicker.setAttribute("aria-label", "일정 색상 수정");
+      colorPicker.addEventListener("input", () => {
+        selectedId = event.id;
+        event.color = colorPicker.value.toLowerCase();
+        saveEvents();
+        fillFormFromEvent(event);
+        render();
+      });
+
+      const titleEdit = document.createElement("input");
+      titleEdit.type = "text";
+      titleEdit.className = "list-title-input";
+      titleEdit.value = event.title;
+      titleEdit.placeholder = "새 일정";
+      titleEdit.setAttribute("aria-label", "일정 이름 수정");
+      titleEdit.addEventListener("focus", () => {
+        selectedId = event.id;
+        fillFormFromEvent(event);
+      });
+      titleEdit.addEventListener("change", () => {
+        event.title = titleEdit.value.trim() || "새 일정";
+        saveEvents();
+        render();
+      });
+      titleEdit.addEventListener("keydown", (keyboardEvent) => {
+        if (keyboardEvent.key === "Enter") titleEdit.blur();
+      });
+
+      const timeButton = document.createElement("button");
+      timeButton.type = "button";
+      timeButton.className = "list-time-button";
+      timeButton.textContent = `${formatTime(event.start)}-${formatTime(event.end)}`;
+      timeButton.addEventListener("click", () => selectEvent(event.id));
+
+      item.append(colorPicker, titleEdit, timeButton);
       eventList.appendChild(item);
     });
 }
 
-function render() {
+function renderPlannerOnly() {
   svg.innerHTML = "";
   drawClockFace();
   events.forEach(drawEvent);
   drawDraft();
-  svg.appendChild(createSvgElement("circle", { r: 5.5, class: "center-dot" }));
+  svg.appendChild(createSvgElement("circle", { r: 5.2, class: "center-dot" }));
+}
+
+function render() {
+  renderPlannerOnly();
+  renderColorPalette();
   renderSummary();
   renderEventList();
   deleteButton.hidden = !selectedId;
+  formTitle.textContent = selectedId ? "일정 수정" : "일정 추가";
+  submitButton.textContent = selectedId ? "수정하기" : "추가하기";
 }
 
 function escapeHtml(value) {
-  return value.replace(/[&<>'"]/g, (char) => ({
+  return String(value).replace(/[&<>'"]/g, (char) => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
@@ -282,14 +432,22 @@ function escapeHtml(value) {
 function selectEvent(id) {
   selectedId = id;
   const event = events.find((item) => item.id === id);
-  if (event) {
-    titleInput.value = event.title;
-    startInput.value = formatTime(event.start);
-    endInput.value = formatTime(event.end);
-    colorInput.value = event.color;
-  }
+  if (event) fillFormFromEvent(event);
   draft = null;
   render();
+}
+
+function resetForm(shouldRender = true) {
+  selectedId = null;
+  draft = null;
+  titleInput.value = "";
+  startInput.value = "08:00";
+  endInput.value = "09:00";
+  setCurrentColor(colorInput.value || DEFAULT_COLORS[0], false);
+  formTitle.textContent = "일정 추가";
+  submitButton.textContent = "추가하기";
+  deleteButton.hidden = true;
+  if (shouldRender) render();
 }
 
 function upsertEvent() {
@@ -307,7 +465,7 @@ function upsertEvent() {
     events = events.map((event) => event.id === selectedId ? { ...event, title, start, end, color } : event);
   } else {
     events.push({
-      id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+      id: createId(),
       title,
       start,
       end,
@@ -316,19 +474,14 @@ function upsertEvent() {
   }
 
   saveEvents();
-  draft = null;
-  selectedId = null;
-  titleInput.value = "";
-  render();
+  resetForm();
 }
 
 function removeSelected() {
   if (!selectedId) return;
   events = events.filter((event) => event.id !== selectedId);
-  selectedId = null;
   saveEvents();
-  titleInput.value = "";
-  render();
+  resetForm();
 }
 
 svg.addEventListener("pointerdown", (event) => {
@@ -340,9 +493,17 @@ svg.addEventListener("pointerdown", (event) => {
 
   selectedId = null;
   dragStart = minutesFromPointer(event);
-  draft = { start: dragStart, end: (dragStart + 30) % 1440, title: "선택 중", color: colorInput.value };
+  draft = {
+    start: dragStart,
+    end: (dragStart + 30) % 1440,
+    title: "선택 중",
+    color: colorInput.value,
+  };
   startInput.value = formatTime(draft.start);
   endInput.value = formatTime(draft.end);
+  formTitle.textContent = "일정 추가";
+  submitButton.textContent = "추가하기";
+  deleteButton.hidden = true;
   svg.setPointerCapture(event.pointerId);
   render();
 });
@@ -350,10 +511,15 @@ svg.addEventListener("pointerdown", (event) => {
 svg.addEventListener("pointermove", (event) => {
   if (dragStart === null) return;
   const end = minutesFromPointer(event);
-  draft = { start: dragStart, end: end === dragStart ? (dragStart + 30) % 1440 : end, title: "선택 중", color: colorInput.value };
+  draft = {
+    start: dragStart,
+    end: end === dragStart ? (dragStart + SNAP_MINUTES) % 1440 : end,
+    title: "선택 중",
+    color: colorInput.value,
+  };
   startInput.value = formatTime(draft.start);
   endInput.value = formatTime(draft.end);
-  render();
+  renderPlannerOnly();
 });
 
 svg.addEventListener("pointerup", (event) => {
@@ -382,17 +548,37 @@ clearButton.addEventListener("click", () => {
   selectedId = null;
   draft = null;
   saveEvents();
-  render();
+  resetForm();
 });
 
 dateInput.addEventListener("change", loadEvents);
 
-colorInput.addEventListener("change", () => {
-  if (draft) {
-    draft.color = colorInput.value;
-    render();
-  }
+customColorInput.addEventListener("input", () => {
+  setCurrentColor(customColorInput.value);
 });
 
+addColorButton.addEventListener("click", () => {
+  addCustomColor(customColorInput.value);
+});
+
+titleInput.addEventListener("input", () => {
+  if (draft) draft.title = titleInput.value.trim() || "선택 중";
+  renderPlannerOnly();
+});
+
+startInput.addEventListener("change", () => {
+  if (!draft) return;
+  draft.start = parseTime(startInput.value);
+  renderPlannerOnly();
+});
+
+endInput.addEventListener("change", () => {
+  if (!draft) return;
+  draft.end = parseTime(endInput.value);
+  renderPlannerOnly();
+});
+
+loadCustomColors();
 dateInput.value = todayValue();
+setCurrentColor(DEFAULT_COLORS[0], false);
 loadEvents();
