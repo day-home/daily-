@@ -3,96 +3,919 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>하루 일정표</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>일상홈피</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --sky: #cee2fb;
+      --paper: #ffffff;
+      --ink: #000000;
+      --soft-ink: #333333;
+      --line: #000000;
+      --thin-line: #a9a9a9;
+
+      --border: 2px solid var(--line);
+      --thin-border: 1px solid var(--line);
+
+      font-family: "Noto Serif KR", "Nanum Myeongjo", "AppleMyungjo", "Batang", "Times New Roman", serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      min-width: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      color: var(--ink);
+      background: var(--sky);
+    }
+
+    body {
+      padding: 28px 0 44px;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    .page {
+      width: min(1120px, calc(100vw - 28px));
+      margin: 0 auto;
+    }
+
+    .main-title {
+      width: 100%;
+      min-height: 86px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 14px;
+      padding: 14px 20px;
+      background: var(--paper);
+      border: var(--border);
+      text-align: center;
+    }
+
+    .main-title p {
+      margin: 0 0 5px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+    }
+
+    .main-title h1 {
+      margin: 0;
+      font-size: clamp(34px, 4.8vw, 54px);
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -0.06em;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: minmax(360px, 1.35fr) 230px minmax(310px, 0.95fr);
+      grid-template-rows: 126px 360px 132px 180px;
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .card {
+      position: relative;
+      background: var(--paper);
+      border: var(--border);
+      overflow: hidden;
+    }
+
+    .click-card {
+      display: block;
+      cursor: pointer;
+    }
+
+    .click-card:hover::after {
+      content: "자세히 보기";
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      padding: 4px 8px;
+      border: var(--thin-border);
+      background: var(--paper);
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 3;
+    }
+
+    .card-title {
+      display: grid;
+      place-items: center;
+      min-height: 38px;
+      padding: 6px 10px;
+      border-bottom: var(--border);
+      text-align: center;
+      font-size: 23px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .card-title.small {
+      min-height: 34px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .date-card {
+      grid-column: 1;
+      grid-row: 1;
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1fr);
+      grid-template-rows: 1fr 1fr;
+    }
+
+    .date-mark {
+      grid-row: 1;
+      display: grid;
+      place-items: center;
+      border-right: var(--thin-border);
+      border-bottom: var(--thin-border);
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .date-input-wrap {
+      grid-row: 1;
+      display: grid;
+      place-items: center;
+      border-bottom: var(--thin-border);
+      padding: 8px 12px;
+    }
+
+    #mainDate {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      text-align: center;
+      font-size: 21px;
+      font-weight: 700;
+    }
+
+    .sleep-label {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .piano-card {
+      grid-column: 2;
+      grid-row: 1;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      text-align: center;
+    }
+
+    .piano-title {
+      display: grid;
+      place-items: center;
+      border-bottom: var(--thin-border);
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .piano-time {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .piano-time span {
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      font-weight: 500;
+    }
+
+    .piano-time span:first-child {
+      border-right: var(--thin-border);
+    }
+
+    .todo-card {
+      grid-column: 1;
+      grid-row: 2 / 5;
+    }
+
+    .todo-lines {
+      height: calc(100% - 38px);
+      background:
+        linear-gradient(to right, transparent 0 48px, var(--thin-line) 48px 49px, transparent 49px),
+        repeating-linear-gradient(to bottom, transparent 0 37px, #d8d8d8 37px 38px);
+      padding: 16px 18px 16px 68px;
+    }
+
+    .todo-preview {
+      display: grid;
+      gap: 13px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: 17px;
+      line-height: 1.45;
+      font-weight: 600;
+    }
+
+    .todo-preview li.empty {
+      color: #555;
+      font-weight: 400;
+    }
+
+    .actual-card {
+      grid-column: 2;
+      grid-row: 2 / 5;
+    }
+
+    .actual-body {
+      height: calc(100% - 38px);
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      background:
+        repeating-linear-gradient(to bottom, transparent 0 37px, #d8d8d8 37px 38px);
+    }
+
+    .hour-column {
+      border-right: var(--thin-border);
+    }
+
+    .hour-cell {
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-bottom: 1px solid #d8d8d8;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .actual-preview {
+      position: relative;
+      padding: 10px;
+    }
+
+    .actual-empty {
+      margin: 0;
+      color: #555;
+      font-size: 13px;
+      line-height: 1.5;
+      font-weight: 400;
+    }
+
+    .planner-card {
+      grid-column: 3;
+      grid-row: 1 / 3;
+      padding: 0;
+    }
+
+    .planner-preview-area {
+      height: calc(100% - 34px);
+      display: grid;
+      place-items: center;
+      padding: 12px 12px 8px;
+    }
+
+    #plannerPreview {
+      display: block;
+      width: min(100%, 350px);
+      aspect-ratio: 1 / 1;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .mini-clock-face {
+      fill: var(--paper);
+      stroke: var(--ink);
+      stroke-width: 2.2;
+    }
+
+    .mini-hour-line {
+      stroke: var(--ink);
+      stroke-width: 0.7;
+      opacity: 0.22;
+    }
+
+    .mini-hour-line.major {
+      stroke-width: 1.6;
+      opacity: 0.86;
+    }
+
+    .mini-hour-line.diagonal {
+      stroke-width: 1.05;
+      opacity: 0.55;
+    }
+
+    .mini-sector {
+      stroke: var(--ink);
+      stroke-width: 1.1;
+      opacity: 0.82;
+    }
+
+    .mini-time-label {
+      fill: var(--ink);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+    }
+
+    .mini-event-label {
+      fill: var(--ink);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: -0.05em;
+      paint-order: stroke;
+      stroke: var(--paper);
+      stroke-width: 2.8;
+      stroke-linejoin: round;
+    }
+
+    .mini-center-dot {
+      fill: var(--ink);
+    }
+
+    .planner-empty {
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      width: calc(100% - 24px);
+      text-align: center;
+      color: #555;
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    .mood-card {
+      grid-column: 3;
+      grid-row: 3;
+    }
+
+    .mood-row {
+      display: grid;
+      grid-template-columns: repeat(5, 42px) 1fr;
+      border-bottom: var(--thin-border);
+    }
+
+    .mood-face {
+      display: grid;
+      place-items: center;
+      height: 42px;
+      border-right: var(--thin-border);
+      font-size: 22px;
+    }
+
+    .mood-question {
+      display: grid;
+      place-items: center;
+      padding: 0 10px;
+      font-size: 12px;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .mood-lines {
+      height: calc(100% - 43px);
+      background: repeating-linear-gradient(to bottom, transparent 0 37px, #d8d8d8 37px 38px);
+    }
+
+    .memo-card {
+      grid-column: 3;
+      grid-row: 4;
+    }
+
+    .memo-body {
+      height: calc(100% - 38px);
+      padding: 12px;
+      background:
+        linear-gradient(#e5e5e5 1px, transparent 1px),
+        linear-gradient(90deg, #e5e5e5 1px, transparent 1px);
+      background-size: 22px 22px;
+    }
+
+    .memo-preview {
+      margin: 0;
+      color: #333;
+      font-size: 14px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+
+    .ad-card {
+      margin-top: 14px;
+      min-height: 74px;
+      display: grid;
+      place-items: center;
+      background: var(--paper);
+      border: var(--border);
+      color: #555;
+      font-size: 13px;
+      letter-spacing: 0.04em;
+    }
+
+    @media (max-width: 980px) {
+      body {
+        padding-top: 16px;
+      }
+
+      .page {
+        width: min(720px, calc(100vw - 20px));
+      }
+
+      .dashboard {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+      }
+
+      .date-card,
+      .piano-card,
+      .todo-card,
+      .actual-card,
+      .planner-card,
+      .mood-card,
+      .memo-card {
+        grid-column: 1;
+        grid-row: auto;
+      }
+
+      .todo-card {
+        min-height: 360px;
+      }
+
+      .actual-card {
+        min-height: 420px;
+      }
+
+      .planner-card {
+        min-height: 430px;
+      }
+
+      .mood-card {
+        min-height: 132px;
+      }
+
+      .memo-card {
+        min-height: 180px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .page {
+        width: calc(100vw - 16px);
+      }
+
+      .main-title {
+        min-height: 72px;
+      }
+
+      .main-title h1 {
+        font-size: 34px;
+      }
+
+      .date-card {
+        grid-template-columns: 58px minmax(0, 1fr);
+      }
+
+      #mainDate {
+        font-size: 16px;
+      }
+
+      .sleep-label {
+        font-size: 20px;
+      }
+
+      .mood-row {
+        grid-template-columns: repeat(5, 36px);
+      }
+
+      .mood-question {
+        grid-column: 1 / -1;
+        min-height: 36px;
+        border-top: var(--thin-border);
+      }
+    }
+  </style>
 </head>
+
 <body>
-  <main class="app-shell">
-    <header class="page-header">
-      <section class="title-area" aria-label="페이지 제목">
-        <p class="small-title">DAILY PLAN</p>
-        <h1>하루 일정표</h1>
-      </section>
+  <main class="page">
+    <header class="main-title">
+      <div>
+        <p>DAILY PAGE</p>
+        <h1>일상홈피</h1>
+      </div>
     </header>
 
-    <section class="planner-layout" aria-label="하루 일정표 편집 화면">
-      <article class="planner-card">
-        <div class="card-heading">
-          <h2>24H CIRCLE PLAN</h2>
-          <p>원판 안쪽을 드래그하면 10분 단위로 시간이 선택됩니다.</p>
+    <section class="dashboard" aria-label="오늘의 일상 대시보드">
+      <section class="card date-card" aria-label="날짜 정보">
+        <div class="date-mark">D.</div>
+        <label class="date-input-wrap">
+          <input id="mainDate" type="date" aria-label="날짜 선택" />
+        </label>
+        <div class="sleep-label">Zzz</div>
+      </section>
+
+      <a class="card click-card piano-card" href="piano.html" data-page="piano.html" aria-label="피아노 기록 자세히 보기">
+        <div class="piano-title">PIANO 🎹</div>
+        <div class="piano-time">
+          <span id="pianoHour">h</span>
+          <span id="pianoMinute">m</span>
         </div>
+      </a>
 
-        <div class="svg-stage">
-          <svg id="plannerSvg" viewBox="-280 -280 560 560" role="img" aria-label="24시간 원형 일정표"></svg>
+      <a class="card click-card todo-card" href="todo.html" data-page="todo.html" aria-label="투두리스트 자세히 보기">
+        <div class="card-title">TO DO LIST</div>
+        <div class="todo-lines">
+          <ul id="todoPreview" class="todo-preview">
+            <li class="empty">클릭해서 오늘 할 일을 적기</li>
+          </ul>
         </div>
-      </article>
+      </a>
 
-      <aside class="side-panel" aria-label="일정 편집 패널">
-        <form id="eventForm" class="event-form">
-          <div class="panel-title-row">
-            <div>
-              <p class="small-title">ADD PLAN</p>
-              <h2 id="formTitle">일정 추가</h2>
-            </div>
-            <button type="button" id="deleteButton" class="sub-button danger" hidden>삭제</button>
+      <a class="card click-card actual-card" href="actual.html" data-page="actual.html" aria-label="실천 타임테이블 자세히 보기">
+        <div class="card-title small">실천 타임테이블</div>
+        <div class="actual-body">
+          <div id="hourColumn" class="hour-column"></div>
+          <div class="actual-preview">
+            <p id="actualPreview" class="actual-empty">클릭해서 실제로 한 일을 기록하기</p>
           </div>
+        </div>
+      </a>
 
-          <label class="field">
-            <span>날짜</span>
-            <input id="dateInput" type="date" />
-          </label>
+      <a class="card click-card planner-card" id="plannerCard" href="planner.html" data-page="planner.html" aria-label="원형 계획표 자세히 보기">
+        <div class="card-title small">원형 계획표</div>
+        <div class="planner-preview-area">
+          <svg id="plannerPreview" viewBox="-145 -145 290 290" role="img" aria-label="원형 계획표 미리보기"></svg>
+          <p id="plannerEmpty" class="planner-empty">클릭해서 계획표 작성하기</p>
+        </div>
+      </a>
 
-          <label class="field">
-            <span>일정 이름</span>
-            <input id="titleInput" type="text" placeholder="새 일정" autocomplete="off" />
-          </label>
+      <a class="card click-card mood-card" href="mood.html" data-page="mood.html" aria-label="감정 체크 자세히 보기">
+        <div class="mood-row">
+          <div class="mood-face">😆</div>
+          <div class="mood-face">🙂</div>
+          <div class="mood-face">😐</div>
+          <div class="mood-face">😣</div>
+          <div class="mood-face">🥲</div>
+          <div class="mood-question">오늘은 어제보다 나은 하루였는가?</div>
+        </div>
+        <div class="mood-lines"></div>
+      </a>
 
-          <div class="time-row">
-            <label class="field">
-              <span>시작</span>
-              <input id="startInput" type="text" inputmode="numeric" maxlength="5" value="08:00" placeholder="08:00" />
-            </label>
+      <a class="card click-card memo-card" href="memo.html" data-page="memo.html" aria-label="메모 자세히 보기">
+        <div class="card-title small">MEMO</div>
+        <div class="memo-body">
+          <p id="memoPreview" class="memo-preview">클릭해서 메모 작성하기</p>
+        </div>
+      </a>
+    </section>
 
-            <label class="field">
-              <span>끝</span>
-              <input id="endInput" type="text" inputmode="numeric" maxlength="5" value="09:00" placeholder="09:00" />
-            </label>
-          </div>
-
-          <div class="field color-field">
-            <span>색상</span>
-            <input id="colorInput" type="hidden" value="#e6ddfb" />
-
-            <div id="colorPalette" class="color-palette" aria-label="색상 선택">
-              <label id="customColorBox" class="custom-color-box" style="--custom-preview: #cee2fb;" aria-label="직접 색 고르기">
-                <input id="customColorInput" type="color" value="#cee2fb" />
-                <span aria-hidden="true">+</span>
-              </label>
-
-              <button id="addColorButton" type="button" class="sub-button color-add-button">색 추가</button>
-            </div>
-          </div>
-
-          <button id="submitButton" class="primary-button" type="submit">추가하기</button>
-        </form>
-
-        <section class="panel-section">
-          <div class="section-heading">
-            <h3>오늘의 합계</h3>
-            <button id="clearButton" type="button" class="sub-button">비우기</button>
-          </div>
-          <ul id="summaryList" class="summary-list"></ul>
-        </section>
-
-        <section class="panel-section">
-          <h3>일정 목록</h3>
-          <p class="section-note">색상, 이름, 시간을 누르면 바로 수정할 수 있어요.</p>
-          <ul id="eventList" class="event-list"></ul>
-        </section>
-      </aside>
+    <section class="ad-card" aria-label="광고 영역">
+      AD BANNER AREA
     </section>
   </main>
 
-  <script src="app.js"></script>
+  <script>
+    const PLAN_STORAGE_PREFIX = "haru-wonpan:";
+    const DAILY_STORAGE_PREFIX = "daily:";
+
+    const mainDate = document.querySelector("#mainDate");
+    const plannerPreview = document.querySelector("#plannerPreview");
+    const plannerEmpty = document.querySelector("#plannerEmpty");
+    const todoPreview = document.querySelector("#todoPreview");
+    const memoPreview = document.querySelector("#memoPreview");
+    const actualPreview = document.querySelector("#actualPreview");
+    const hourColumn = document.querySelector("#hourColumn");
+    const pianoHour = document.querySelector("#pianoHour");
+    const pianoMinute = document.querySelector("#pianoMinute");
+
+    const MINI_RADIUS = 112;
+
+    function todayValue() {
+      const date = new Date();
+      date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+      return date.toISOString().slice(0, 10);
+    }
+
+    function safeJsonParse(value, fallback) {
+      try {
+        return JSON.parse(value) ?? fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function selectedDate() {
+      return mainDate.value || todayValue();
+    }
+
+    function dailyKey(type) {
+      return `${DAILY_STORAGE_PREFIX}${selectedDate()}:${type}`;
+    }
+
+    function planKey() {
+      return `${PLAN_STORAGE_PREFIX}${selectedDate()}`;
+    }
+
+    function updatePageLinks() {
+      const date = selectedDate();
+
+      document.querySelectorAll("[data-page]").forEach((link) => {
+        const page = link.dataset.page;
+        link.href = `${page}?date=${encodeURIComponent(date)}`;
+      });
+    }
+
+    function minutesToAngle(minutes) {
+      return (minutes / 1440) * 360 - 90;
+    }
+
+    function polar(radius, angleDeg) {
+      const rad = (angleDeg * Math.PI) / 180;
+      return {
+        x: Math.cos(rad) * radius,
+        y: Math.sin(rad) * radius,
+      };
+    }
+
+    function createSvgElement(tag, attrs = {}) {
+      const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+
+      Object.entries(attrs).forEach(([key, value]) => {
+        el.setAttribute(key, value);
+      });
+
+      return el;
+    }
+
+    function sectorPath(start, end, radius = MINI_RADIUS) {
+      const diff = end - start;
+      if (diff <= 0) return "";
+
+      const startPoint = polar(radius, minutesToAngle(start));
+      const endPoint = polar(radius, minutesToAngle(end));
+      const largeArcFlag = diff > 720 ? 1 : 0;
+
+      return [
+        "M 0 0",
+        `L ${startPoint.x.toFixed(2)} ${startPoint.y.toFixed(2)}`,
+        `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endPoint.x.toFixed(2)} ${endPoint.y.toFixed(2)}`,
+        "Z",
+      ].join(" ");
+    }
+
+    function eventSegments(event) {
+      if (event.start === event.end) return [];
+
+      if (event.end > event.start) {
+        return [{ start: event.start, end: event.end }];
+      }
+
+      return [
+        { start: event.start, end: 1440 },
+        { start: 0, end: event.end },
+      ];
+    }
+
+    function formatTime(minutes) {
+      const normalized = ((minutes % 1440) + 1440) % 1440;
+      const h = Math.floor(normalized / 60).toString().padStart(2, "0");
+      const m = (normalized % 60).toString().padStart(2, "0");
+      return `${h}:${m}`;
+    }
+
+    function durationOf(event) {
+      if (event.end > event.start) return event.end - event.start;
+      if (event.end < event.start) return 1440 - event.start + event.end;
+      return 0;
+    }
+
+    function normalizeEvent(event) {
+      return {
+        title: typeof event.title === "string" ? event.title : "새 일정",
+        start: Number.isFinite(event.start) ? event.start : 0,
+        end: Number.isFinite(event.end) ? event.end : 0,
+        color: /^#[0-9a-f]{6}$/i.test(event.color || "") ? event.color : "#e1edfc",
+      };
+    }
+
+    function drawMiniClockFace() {
+      plannerPreview.appendChild(createSvgElement("circle", {
+        r: MINI_RADIUS,
+        class: "mini-clock-face",
+      }));
+
+      for (let i = 0; i < 24; i += 1) {
+        const angle = minutesToAngle(i * 60);
+        const end = polar(MINI_RADIUS, angle);
+
+        plannerPreview.appendChild(createSvgElement("line", {
+          x1: 0,
+          y1: 0,
+          x2: end.x.toFixed(2),
+          y2: end.y.toFixed(2),
+          class: `mini-hour-line ${i % 6 === 0 ? "major" : i % 6 === 3 ? "diagonal" : ""}`,
+        }));
+      }
+    }
+
+    function appendMiniText(text, x, y, className) {
+      const el = createSvgElement("text", {
+        x: x.toFixed(2),
+        y: y.toFixed(2),
+        class: className,
+        "text-anchor": "middle",
+        "dominant-baseline": "middle",
+      });
+
+      el.textContent = text;
+      plannerPreview.appendChild(el);
+    }
+
+    function drawMiniEvent(event) {
+      eventSegments(event).forEach((segment) => {
+        plannerPreview.appendChild(createSvgElement("path", {
+          d: sectorPath(segment.start, segment.end),
+          fill: event.color,
+          class: "mini-sector",
+        }));
+
+        const length = segment.end - segment.start;
+
+        if (length >= 55) {
+          const mid = segment.start + length / 2;
+          const position = polar(MINI_RADIUS * 0.58, minutesToAngle(mid));
+          const title = event.title.length > 8 ? `${event.title.slice(0, 8)}…` : event.title;
+
+          appendMiniText(title, position.x, position.y, "mini-event-label");
+        }
+      });
+    }
+
+    function drawMiniTimeLabels(events) {
+      const boundaries = new Set();
+
+      if (events.length) {
+        events.forEach((event) => {
+          boundaries.add(event.start);
+          boundaries.add(event.end);
+        });
+      } else {
+        [0, 360, 720, 1080].forEach((time) => boundaries.add(time));
+      }
+
+      [...boundaries]
+        .sort((a, b) => a - b)
+        .slice(0, 12)
+        .forEach((minutes) => {
+          const position = polar(MINI_RADIUS + 17, minutesToAngle(minutes));
+          appendMiniText(formatTime(minutes), position.x, position.y, "mini-time-label");
+        });
+    }
+
+    function renderPlannerPreview() {
+      plannerPreview.innerHTML = "";
+
+      const raw = localStorage.getItem(planKey());
+      const events = safeJsonParse(raw, [])
+        .filter(Boolean)
+        .map(normalizeEvent)
+        .filter((event) => event.start !== event.end);
+
+      drawMiniClockFace();
+      events.forEach(drawMiniEvent);
+      drawMiniTimeLabels(events);
+
+      plannerPreview.appendChild(createSvgElement("circle", {
+        r: 3.4,
+        class: "mini-center-dot",
+      }));
+
+      plannerEmpty.hidden = events.length > 0;
+    }
+
+    function renderTodoPreview() {
+      const todos = safeJsonParse(localStorage.getItem(dailyKey("todo")), []);
+
+      todoPreview.innerHTML = "";
+
+      if (!Array.isArray(todos) || todos.length === 0) {
+        todoPreview.innerHTML = `<li class="empty">클릭해서 오늘 할 일을 적기</li>`;
+        return;
+      }
+
+      todos.slice(0, 7).forEach((todo) => {
+        const li = document.createElement("li");
+        li.textContent = typeof todo === "string" ? todo : todo.text || "할 일";
+        todoPreview.appendChild(li);
+      });
+    }
+
+    function renderMemoPreview() {
+      const memo = localStorage.getItem(dailyKey("memo")) || "";
+      memoPreview.textContent = memo.trim() ? memo.trim().slice(0, 120) : "클릭해서 메모 작성하기";
+    }
+
+    function renderActualPreview() {
+      const actual = safeJsonParse(localStorage.getItem(dailyKey("actual")), []);
+
+      if (!Array.isArray(actual) || actual.length === 0) {
+        actualPreview.textContent = "클릭해서 실제로 한 일을 기록하기";
+        return;
+      }
+
+      actualPreview.textContent = actual
+        .slice(0, 6)
+        .map((item) => {
+          const start = typeof item.start === "number" ? formatTime(item.start) : "00:00";
+          const end = typeof item.end === "number" ? formatTime(item.end) : "00:00";
+          const title = item.title || "기록";
+          return `${start}-${end} ${title}`;
+        })
+        .join("\n");
+    }
+
+    function renderPianoTime() {
+      const events = safeJsonParse(localStorage.getItem(planKey()), [])
+        .filter(Boolean)
+        .map(normalizeEvent);
+
+      const pianoMinutes = events
+        .filter((event) => /피아노|연습|piano/i.test(event.title))
+        .reduce((sum, event) => sum + durationOf(event), 0);
+
+      if (!pianoMinutes) {
+        pianoHour.textContent = "h";
+        pianoMinute.textContent = "m";
+        return;
+      }
+
+      pianoHour.textContent = `${Math.floor(pianoMinutes / 60)}h`;
+      pianoMinute.textContent = `${pianoMinutes % 60}m`;
+    }
+
+    function renderHourColumn() {
+      const hours = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2];
+
+      hourColumn.innerHTML = "";
+
+      hours.forEach((hour) => {
+        const cell = document.createElement("div");
+        cell.className = "hour-cell";
+
+        if (hour === 0) {
+          cell.textContent = "12";
+        } else if (hour > 12) {
+          cell.textContent = String(hour - 12);
+        } else {
+          cell.textContent = String(hour);
+        }
+
+        hourColumn.appendChild(cell);
+      });
+    }
+
+    function renderDashboard() {
+      localStorage.setItem("daily:selected-date", selectedDate());
+
+      updatePageLinks();
+      renderPlannerPreview();
+      renderTodoPreview();
+      renderMemoPreview();
+      renderActualPreview();
+      renderPianoTime();
+    }
+
+    mainDate.value = localStorage.getItem("daily:selected-date") || todayValue();
+    renderHourColumn();
+    renderDashboard();
+
+    mainDate.addEventListener("change", renderDashboard);
+
+    window.addEventListener("storage", renderDashboard);
+    window.addEventListener("pageshow", renderDashboard);
+  </script>
 </body>
 </html>
