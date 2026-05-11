@@ -1,1 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>하루 일정표</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="page-header">
+      <section class="title-area" aria-label="페이지 제목">
+        <p class="small-title">DAILY PLAN</p>
+        <h1>하루 일정표</h1>
+      </section>
+    </header>
 
+    <section class="planner-layout" aria-label="하루 일정표 편집 화면">
+      <article class="planner-card">
+        <div class="card-heading">
+          <h2>24H CIRCLE PLAN</h2>
+          <p>원판 안쪽을 드래그하면 10분 단위로 시간이 선택됩니다.</p>
+        </div>
+
+        <div class="svg-stage">
+          <svg id="plannerSvg" viewBox="-280 -280 560 560" role="img" aria-label="24시간 원형 일정표"></svg>
+        </div>
+      </article>
+
+      <aside class="side-panel" aria-label="일정 편집 패널">
+        <form id="eventForm" class="event-form">
+          <div class="panel-title-row">
+            <div>
+              <p class="small-title">ADD PLAN</p>
+              <h2 id="formTitle">일정 추가</h2>
+            </div>
+            <button type="button" id="deleteButton" class="sub-button danger" hidden>삭제</button>
+          </div>
+
+          <label class="field">
+            <span>날짜</span>
+            <input id="dateInput" type="date" />
+          </label>
+
+          <label class="field">
+            <span>일정 이름</span>
+            <input id="titleInput" type="text" placeholder="새 일정" autocomplete="off" />
+          </label>
+
+          <div class="time-row">
+            <label class="field">
+              <span>시작</span>
+              <input id="startInput" type="text" inputmode="numeric" maxlength="5" value="08:00" placeholder="08:00" />
+            </label>
+
+            <label class="field">
+              <span>끝</span>
+              <input id="endInput" type="text" inputmode="numeric" maxlength="5" value="09:00" placeholder="09:00" />
+            </label>
+          </div>
+
+          <div class="field color-field">
+            <span>색상</span>
+            <input id="colorInput" type="hidden" value="#e6ddfb" />
+
+            <div id="colorPalette" class="color-palette" aria-label="색상 선택">
+              <label id="customColorBox" class="custom-color-box" style="--custom-preview: #cee2fb;" aria-label="직접 색 고르기">
+                <input id="customColorInput" type="color" value="#cee2fb" />
+                <span aria-hidden="true">+</span>
+              </label>
+
+              <button id="addColorButton" type="button" class="sub-button color-add-button">색 추가</button>
+            </div>
+          </div>
+
+          <button id="submitButton" class="primary-button" type="submit">추가하기</button>
+        </form>
+
+        <section class="panel-section">
+          <div class="section-heading">
+            <h3>오늘의 합계</h3>
+            <button id="clearButton" type="button" class="sub-button">비우기</button>
+          </div>
+          <ul id="summaryList" class="summary-list"></ul>
+        </section>
+
+        <section class="panel-section">
+          <h3>일정 목록</h3>
+          <p class="section-note">색상, 이름, 시간을 누르면 바로 수정할 수 있어요.</p>
+          <ul id="eventList" class="event-list"></ul>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
