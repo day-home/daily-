@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>하루 원판 - 원형 24시간 플래너</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero">
+      <p class="eyebrow">하늘색 다이어리 테마</p>
+      <h1>오늘 하루를 <span>동그랗게</span> 기록하기</h1>
+      <p class="hero-copy">종이 플래너처럼 가볍게 드래그하고, 내가 보낸 하루를 하늘색 원판 위에 채워보세요.</p>
+    </section>
+
+    <section class="planner-layout" aria-label="원형 하루 플래너">
+      <article class="planner-card">
+        <div class="card-header">
+          <div>
+            <p class="tiny-label">오늘의 원판</p>
+            <h2>24시간 하루 원판</h2>
+          </div>
+          <label class="date-picker">
+            날짜
+            <input id="dateInput" type="date" />
+          </label>
+        </div>
+
+        <div class="svg-stage">
+          <svg id="plannerSvg" viewBox="-280 -280 560 560" role="img" aria-label="24시간 원형 플래너"></svg>
+          <div class="touch-hint">드래그해서 시간을 칠해보세요</div>
+        </div>
+      </article>
+
+      <aside class="side-panel">
+        <form id="eventForm" class="event-form">
+          <div class="panel-title-row">
+            <div>
+              <p class="tiny-label">일정 추가</p>
+              <h2>하루 채우기</h2>
+            </div>
+            <button type="button" id="deleteButton" class="ghost-button danger" hidden>선택 삭제</button>
+          </div>
+
+          <label>
+            제목
+            <input id="titleInput" type="text" placeholder="예: 연습, 학교, 밥, 휴식" autocomplete="off" />
+          </label>
+
+          <div class="time-row">
+            <label>
+              시작
+              <input id="startInput" type="time" step="300" value="08:00" />
+            </label>
+            <label>
+              끝
+              <input id="endInput" type="time" step="300" value="09:00" />
+            </label>
+          </div>
+
+          <label>
+            색상
+            <select id="colorInput">
+              <option value="#d8f1f8">수면하늘</option>
+              <option value="#d8cdf7">연습보라</option>
+              <option value="#fff08c">병아리노랑</option>
+              <option value="#f7aaa0">살구코랄</option>
+              <option value="#ffd6e3">휴식분홍</option>
+              <option value="#ccefdc">민트초록</option>
+            </select>
+          </label>
+
+          <button class="primary-button" type="submit">원판에 추가하기</button>
+        </form>
+
+        <section class="panel-section">
+          <div class="section-heading">
+            <h3>오늘의 합계</h3>
+            <button id="clearButton" type="button" class="ghost-button">오늘 비우기</button>
+          </div>
+          <ul id="summaryList" class="summary-list"></ul>
+        </section>
+
+        <section class="panel-section">
+          <h3>일정 목록</h3>
+          <ul id="eventList" class="event-list"></ul>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
