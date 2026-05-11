@@ -19,7 +19,7 @@
       <article class="planner-card">
         <div class="card-heading">
           <h2>24H CIRCLE PLAN</h2>
-          <p>원판을 드래그하면 10분 단위로 시간이 선택됩니다.</p>
+          <p>원판 안쪽을 드래그하면 10분 단위로 시간이 선택됩니다.</p>
         </div>
 
         <div class="svg-stage">
@@ -50,22 +50,26 @@
           <div class="time-row">
             <label class="field">
               <span>시작</span>
-              <input id="startInput" type="time" step="600" value="08:00" />
+              <input id="startInput" type="text" inputmode="numeric" maxlength="5" value="08:00" placeholder="08:00" />
             </label>
 
             <label class="field">
               <span>끝</span>
-              <input id="endInput" type="time" step="600" value="09:00" />
+              <input id="endInput" type="text" inputmode="numeric" maxlength="5" value="09:00" placeholder="09:00" />
             </label>
           </div>
 
           <div class="field color-field">
             <span>색상</span>
             <input id="colorInput" type="hidden" value="#e6ddfb" />
-            <div id="colorPalette" class="color-palette" aria-label="색상 선택"></div>
-            <div class="custom-color-row">
-              <input id="customColorInput" type="color" value="#cee2fb" aria-label="직접 색 고르기" />
-              <button id="addColorButton" type="button" class="sub-button">색 추가</button>
+
+            <div id="colorPalette" class="color-palette" aria-label="색상 선택">
+              <label id="customColorBox" class="custom-color-box" style="--custom-preview: #cee2fb;" aria-label="직접 색 고르기">
+                <input id="customColorInput" type="color" value="#cee2fb" />
+                <span aria-hidden="true">+</span>
+              </label>
+
+              <button id="addColorButton" type="button" class="sub-button color-add-button">색 추가</button>
             </div>
           </div>
 
@@ -82,7 +86,7 @@
 
         <section class="panel-section">
           <h3>일정 목록</h3>
-          <p class="section-note">색상 칸을 누르면 색을 바꿀 수 있고, 글씨 칸을 누르면 이름을 수정할 수 있어요.</p>
+          <p class="section-note">색상, 이름, 시간을 누르면 바로 수정할 수 있어요.</p>
           <ul id="eventList" class="event-list"></ul>
         </section>
       </aside>
