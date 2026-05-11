@@ -460,3 +460,182 @@ button {
     flex-direction: column;
   }
 }
+
+/* ================================
+   레이아웃 삐져나감 수정 패치
+   ================================ */
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.app-shell {
+  width: min(1120px, calc(100vw - 24px));
+  max-width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.page-header,
+.planner-layout,
+.planner-card,
+.side-panel,
+.title-area,
+.date-picker,
+.event-form,
+.panel-section,
+.card-heading,
+.card-header {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.page-header {
+  grid-template-columns: minmax(0, 1fr) minmax(170px, 230px);
+}
+
+.planner-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 16px;
+}
+
+.planner-card,
+.side-panel,
+.title-area,
+.date-picker {
+  overflow: hidden;
+}
+
+.svg-stage {
+  width: 100%;
+  max-width: 680px;
+  aspect-ratio: 1 / 1;
+  padding: clamp(12px, 3vw, 24px);
+}
+
+#plannerSvg {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  display: block;
+}
+
+.event-form input,
+.event-form select,
+.date-picker input {
+  width: 100%;
+  max-width: 100%;
+}
+
+.time-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.time-row label {
+  width: 100%;
+  min-width: 0;
+  flex: initial;
+}
+
+.panel-title-row,
+.section-heading {
+  flex-wrap: wrap;
+}
+
+.primary-button,
+.sub-button,
+.ghost-button {
+  max-width: 100%;
+  white-space: normal;
+}
+
+.summary-list li,
+.event-list button {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.list-left {
+  min-width: 0;
+}
+
+.list-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-time,
+.summary-time {
+  white-space: nowrap;
+}
+
+/* 태블릿 이하에서는 한 줄 배치를 포기하고 세로로 정리 */
+@media (max-width: 980px) {
+  .app-shell {
+    width: min(720px, calc(100vw - 20px));
+  }
+
+  .page-header {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .side-panel {
+    order: -1;
+  }
+}
+
+/* 모바일에서는 더 촘촘하게 */
+@media (max-width: 520px) {
+  .app-shell {
+    width: calc(100vw - 16px);
+    padding-top: 12px;
+    padding-bottom: 36px;
+  }
+
+  .title-area {
+    min-height: auto;
+    padding: 14px;
+  }
+
+  .title-area h1 {
+    font-size: 34px;
+  }
+
+  .date-picker,
+  .side-panel {
+    padding: 12px;
+  }
+
+  .time-row {
+    grid-template-columns: 1fr;
+  }
+
+  .svg-stage {
+    padding: 10px;
+  }
+
+  .card-heading,
+  .card-header {
+    padding: 12px;
+  }
+
+  .touch-hint {
+    display: none;
+  }
+}
