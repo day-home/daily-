@@ -1002,7 +1002,8 @@ endInput.addEventListener("change", () => {
 });
 
 loadCustomColors();
-dateInput.value = todayValue();
+const urlDate = new URLSearchParams(window.location.search).get("date");
+dateInput.value = /^\d{4}-\d{2}-\d{2}$/.test(urlDate || "") ? urlDate : todayValue();
 updateCustomColorPreview();
 setCurrentColor(DEFAULT_COLORS[0], false);
 loadEvents();
