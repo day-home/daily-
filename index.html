@@ -9,70 +9,67 @@
 <body>
   <main class="app-shell">
     <header class="page-header">
-      <div class="title-area">
+      <section class="title-area" aria-label="페이지 제목">
         <p class="small-title">DAILY PLAN</p>
         <h1>하루 일정표</h1>
-      </div>
-
-      <label class="date-picker">
-        날짜
-        <input id="dateInput" type="date" />
-      </label>
+      </section>
     </header>
 
-    <section class="planner-layout" aria-label="원형 하루 플래너">
+    <section class="planner-layout" aria-label="하루 일정표 편집 화면">
       <article class="planner-card">
         <div class="card-heading">
-          <h2>24시간 원형 플래너</h2>
-          <p>원판을 드래그해서 시간을 선택하세요.</p>
+          <h2>24H CIRCLE PLAN</h2>
+          <p>원판을 드래그하면 10분 단위로 시간이 선택됩니다.</p>
         </div>
 
         <div class="svg-stage">
-          <svg id="plannerSvg" viewBox="-280 -280 560 560" role="img" aria-label="24시간 원형 플래너"></svg>
-          <div class="touch-hint">드래그해서 시간 선택</div>
+          <svg id="plannerSvg" viewBox="-280 -280 560 560" role="img" aria-label="24시간 원형 일정표"></svg>
         </div>
       </article>
 
-      <aside class="side-panel">
+      <aside class="side-panel" aria-label="일정 편집 패널">
         <form id="eventForm" class="event-form">
           <div class="panel-title-row">
             <div>
               <p class="small-title">ADD PLAN</p>
-              <h2>일정 추가</h2>
+              <h2 id="formTitle">일정 추가</h2>
             </div>
             <button type="button" id="deleteButton" class="sub-button danger" hidden>삭제</button>
           </div>
 
-          <label>
-            제목
-            <input id="titleInput" type="text" placeholder="예: 학교, 연습, 밥, 휴식" autocomplete="off" />
+          <label class="field">
+            <span>날짜</span>
+            <input id="dateInput" type="date" />
+          </label>
+
+          <label class="field">
+            <span>일정 이름</span>
+            <input id="titleInput" type="text" placeholder="새 일정" autocomplete="off" />
           </label>
 
           <div class="time-row">
-            <label>
-              시작
-              <input id="startInput" type="time" step="300" value="08:00" />
+            <label class="field">
+              <span>시작</span>
+              <input id="startInput" type="time" step="600" value="08:00" />
             </label>
 
-            <label>
-              끝
-              <input id="endInput" type="time" step="300" value="09:00" />
+            <label class="field">
+              <span>끝</span>
+              <input id="endInput" type="time" step="600" value="09:00" />
             </label>
           </div>
 
-          <label>
-            색상
-            <select id="colorInput">
-              <option value="#dcecff">수면 하늘</option>
-              <option value="#e3d8ff">연습 보라</option>
-              <option value="#fff39a">식사 노랑</option>
-              <option value="#ffc7bd">학교 코랄</option>
-              <option value="#ffdcea">휴식 분홍</option>
-              <option value="#d9f3e4">이동 민트</option>
-            </select>
-          </label>
+          <div class="field color-field">
+            <span>색상</span>
+            <input id="colorInput" type="hidden" value="#e6ddfb" />
+            <div id="colorPalette" class="color-palette" aria-label="색상 선택"></div>
+            <div class="custom-color-row">
+              <input id="customColorInput" type="color" value="#cee2fb" aria-label="직접 색 고르기" />
+              <button id="addColorButton" type="button" class="sub-button">색 추가</button>
+            </div>
+          </div>
 
-          <button class="primary-button" type="submit">추가하기</button>
+          <button id="submitButton" class="primary-button" type="submit">추가하기</button>
         </form>
 
         <section class="panel-section">
@@ -85,6 +82,7 @@
 
         <section class="panel-section">
           <h3>일정 목록</h3>
+          <p class="section-note">색상 칸을 누르면 색을 바꿀 수 있고, 글씨 칸을 누르면 이름을 수정할 수 있어요.</p>
           <ul id="eventList" class="event-list"></ul>
         </section>
       </aside>
