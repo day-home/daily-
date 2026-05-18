@@ -1030,3 +1030,68 @@ dateInput.value = /^\d{4}-\d{2}-\d{2}$/.test(urlDate || "") ? urlDate : todayVal
 updateCustomColorPreview();
 setCurrentColor(DEFAULT_COLORS[0], false);
 loadEvents();
+
+
+document
+  .querySelector("#saveImageBtn")
+  ?.addEventListener("click", async () => {
+
+    const target =
+      document.querySelector(".planner-layout");
+
+    if (!target) return;
+
+    const canvas =
+      await html2canvas(target, {
+        backgroundColor: "#e1edfc",
+      });
+
+    const link =
+      document.createElement("a");
+
+    link.download =
+      `${dateInput.value}-planner.png`;
+
+    link.href =
+      canvas.toDataURL("image/png");
+
+    link.click();
+});
+
+document
+  .querySelector("#savePdfBtn")
+  ?.addEventListener("click", async () => {
+
+    const target =
+      document.querySelector(".planner-layout");
+
+    if (!target) return;
+
+    const canvas =
+      await html2canvas(target, {
+        backgroundColor: "#e1edfc",
+      });
+
+    const imgData =
+      canvas.toDataURL("image/png");
+
+    const pdf =
+      new jspdf.jsPDF({
+        orientation: "portrait",
+        unit: "px",
+        format: [canvas.width, canvas.height],
+      });
+
+    pdf.addImage(
+      imgData,
+      "PNG",
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    pdf.save(
+      `${dateInput.value}-planner.pdf`
+    );
+});
