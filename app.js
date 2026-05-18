@@ -767,7 +767,30 @@ function renderEventList() {
       });
 
       timeEditor.append(startEdit, dash, endEdit);
-      item.append(colorWrap, titleEdit, timeEditor);
+
+      const deleteMiniButton = document.createElement("button");
+      deleteMiniButton.type = "button";
+      deleteMiniButton.className = "delete-event-btn";
+      deleteMiniButton.textContent = "×";
+      
+      deleteMiniButton.addEventListener("click", () => {
+        events = events.filter((e) => e.id !== event.id);
+      
+        if (selectedId === event.id) {
+          selectedId = null;
+        }
+      
+        saveEvents();
+        render();
+      });
+      
+      item.append(
+        colorWrap,
+        titleEdit,
+        timeEditor,
+        deleteMiniButton
+      );
+      
       eventList.appendChild(item);
     });
 }
