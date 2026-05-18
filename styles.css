@@ -875,3 +875,39 @@ button {
   stroke-width: 1.65;
   opacity: 0.86;
 }
+
+.export-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.export-buttons button {
+  flex: 1;
+  min-height: 42px;
+  border: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.export-buttons button:hover {
+  background: #f5f5f5;
+}
+
+.delete-event-btn {
+  border: none;
+  background: transparent;
+  color: #444;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
+}
+
+.delete-event-btn:hover {
+  opacity: 0.5;
+}
