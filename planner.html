@@ -34,6 +34,15 @@
               <p class="small-title">ADD PLAN</p>
               <h2 id="formTitle">일정 추가</h2>
             </div>
+            <div class="export-buttons">
+              <button type="button" id="saveImageBtn">
+                PNG 저장
+              </button>
+            
+              <button type="button" id="savePdfBtn">
+                PDF 저장
+              </button>
+            </div>
             <button type="button" id="deleteButton" class="sub-button danger" hidden>삭제</button>
           </div>
 
@@ -93,6 +102,8 @@
     </section>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
   <script src="app.js"></script>
 </body>
 </html>
