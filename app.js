@@ -16,6 +16,10 @@ const eventList = document.querySelector("#eventList");
 const clearButton = document.querySelector("#clearButton");
 const deleteButton = document.querySelector("#deleteButton");
 
+// 내보내기 버튼 추가
+const exportPngButton = document.querySelector("#exportPngButton");
+const exportPdfButton = document.querySelector("#exportPdfButton");
+
 const RADIUS = 238;
 const SNAP_MINUTES = 10;
 const STORAGE_PREFIX = "haru-wonpan:";
@@ -871,6 +875,121 @@ function removeSelected() {
   resetForm();
 }
 
+// ──────────────────────────────────────────────────
+// [추가된 기능] 이미지(PNG) & PDF 파일 내보내기 핵심 로직
+// ──────────────────────────────────────────────────
+
+// 외부 라이브러리 로드를 위한 헬퍼 함수
+function loadScript(url) {
+  return new Promise((resolve, reject) => {
+    if (window.jspdf) { resolve(); return; }
+    const script = document.createElement("script");
+    script.src = url;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("라이브러리 로드 실패"));
+    document.head.appendChild(script);
+  });
+}
+
+async function exportPlanner(type = 'png') {
+  // 1. 원본 SVG 클론 (DOM 직접 조작 방지)
+  const clonedSvg = svg.cloneNode(true);
+  
+  // 2. 외부 CSS 스타일시트에서 시간표 스타일만 추출하여 주입 (색상 및 글꼴 깨짐 방지)
+  const styleEl = document.createElementNS("http://www.w3.org/2000/svg", "style");
+  let cssStyles = "";
+  for (const sheet of document.styleSheets) {
+    try {
+      const rules = sheet.cssRules || sheet.rules;
+      if (!rules) continue;
+      for (const rule of rules) {
+        cssStyles += rule.cssText + "\n";
+      }
+    } catch (e) {
+      // 크로스 오리진 스타일시트 에러 방지용 예외 처리
+    }
+  }
+  styleEl.textContent = cssStyles;
+  clonedSvg.insertBefore(styleEl, clonedSvg.firstChild);
+
+  // SVG 크기 측정 및 속성 부여
+  const viewBox = svg.viewBox.baseVal;
+  const width = viewBox.width || svg.getBoundingClientRect().width || 600;
+  const height = viewBox.height || svg.getBoundingClientRect().height || 600;
+  clonedSvg.setAttribute("width", width);
+  clonedSvg.setAttribute("height", height);
+
+  // 3. SVG 문서를 데이터 URI 포맷으로 변경
+  const svgString = new XMLSerializer().serializeToString(clonedSvg);
+  const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+  const blobUrl = URL.createObjectURL(svgBlob);
+
+  // 4. 가상 이미지 객체에 로드 후 Canvas에 그리기
+  const img = new Image();
+  img.src = blobUrl;
+  
+  await new Promise((resolve) => { img.onload = resolve; });
+
+  const canvas = document.createElement("canvas");
+  const scale = 2; // 선명한 결과물을 위해 2배 고해상도로 렌더링
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+  
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff"; // 배경색 흰색 설정
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.scale(scale, scale);
+  ctx.drawImage(img, 0, 0, width, height);
+  
+  URL.revokeObjectURL(blobUrl);
+
+  const dateStr = dateInput.value || todayValue();
+  const fileName = `스케줄표_${dateStr}`;
+
+  // 5. 타입별 분기 처리 (PNG vs PDF)
+  if (type === 'png') {
+    const imageData = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = imageData;
+    link.download = `${fileName}.png`;
+    link.click();
+  } else if (type === 'pdf') {
+    try {
+      // jsPDF CDN 라이브러리 동적 로드
+      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+      const { jsPDF } = window.jspdf;
+      
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+      
+      const imgData = canvas.toDataURL("image/png");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      
+      // A4 용지 규격에 맞게 중앙 배치 디자인 구성
+      const printWidth = 160; 
+      const printHeight = (height / width) * printWidth;
+      const x = (pageWidth - printWidth) / 2;
+      const y = 40; 
+      
+      // 상단 타이틀 텍스트 추가
+      pdf.setFontSize(16);
+      pdf.text(`${dateStr} 하루 원판 시간표`, pageWidth / 2, 25, { align: "center" });
+      
+      // 이미지 삽입 및 파일 저장
+      pdf.addImage(imgData, "PNG", x, y, printWidth, printHeight);
+      pdf.save(`${fileName}.pdf`);
+    } catch (err) {
+      console.error("PDF 생성 실패:", err);
+      alert("PDF 저장 중 문제가 발생했어. 인터넷 연결을 확인해줘!");
+    }
+  }
+}
+
+// ──────────────────────────────────────────────────
+
 svg.addEventListener("pointerdown", (event) => {
   const point = pointerPoint(event);
 
@@ -1000,6 +1119,14 @@ endInput.addEventListener("change", () => {
     renderPlannerOnly();
   }
 });
+
+// 내보내기 버튼 이벤트 리스너 바인딩
+if (exportPngButton) {
+  exportPngButton.addEventListener("click", () => exportPlanner("png"));
+}
+if (exportPdfButton) {
+  exportPdfButton.addEventListener("click", () => exportPlanner("pdf"));
+}
 
 loadCustomColors();
 const urlDate = new URLSearchParams(window.location.search).get("date");
