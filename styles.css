@@ -911,3 +911,14 @@ button {
 .delete-event-btn:hover {
   opacity: 0.5;
 }
+
+
+.export-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.export-buttons button {
+  flex: 1;
+}
