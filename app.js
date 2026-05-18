@@ -16,10 +16,6 @@ const eventList = document.querySelector("#eventList");
 const clearButton = document.querySelector("#clearButton");
 const deleteButton = document.querySelector("#deleteButton");
 
-// 내보내기 버튼
-const exportPngButton = document.querySelector("#exportPngButton");
-const exportPdfButton = document.querySelector("#exportPdfButton");
-
 const RADIUS = 238;
 const SNAP_MINUTES = 10;
 const STORAGE_PREFIX = "haru-wonpan:";
@@ -221,8 +217,6 @@ function pointerPoint(event) {
 
   return point.matrixTransform(matrix.inverse());
 }
-
-// ... (중간 코드 유지)
 
 function isInsideClock(point) {
   if (!point) return false;
@@ -636,68 +630,68 @@ function renderEventList() {
       colorWrap.appendChild(colorButton);
 
       if (openColorMenuId === event.id) {
-        const menu = document.createElement("div");
-        menu.className = "list-color-menu";
+  const menu = document.createElement("div");
+  menu.className = "list-color-menu";
 
-        paletteColors.forEach((color) => {
-          const miniWrap = document.createElement("div");
-          miniWrap.className = "mini-color-wrap";
+  paletteColors.forEach((color) => {
+    const miniWrap = document.createElement("div");
+    miniWrap.className = "mini-color-wrap";
 
-          const menuButton = document.createElement("button");
-          menuButton.type = "button";
-          menuButton.className = "mini-color-swatch";
-          menuButton.style.backgroundColor = color;
-          menuButton.setAttribute("aria-label", color);
-          menuButton.setAttribute("aria-pressed", String(event.color === color));
+    const menuButton = document.createElement("button");
+    menuButton.type = "button";
+    menuButton.className = "mini-color-swatch";
+    menuButton.style.backgroundColor = color;
+    menuButton.setAttribute("aria-label", color);
+    menuButton.setAttribute("aria-pressed", String(event.color === color));
 
-          const editor = document.createElement("input");
-          editor.type = "color";
-          editor.className = "mini-color-editor";
-          editor.value = color;
-          editor.setAttribute("aria-label", "고정 색상 수정");
+    const editor = document.createElement("input");
+    editor.type = "color";
+    editor.className = "mini-color-editor";
+    editor.value = color;
+    editor.setAttribute("aria-label", "고정 색상 수정");
 
-          menuButton.addEventListener("click", () => {
-            const isAlreadySelected = event.color.toLowerCase() === color.toLowerCase();
+    menuButton.addEventListener("click", () => {
+      const isAlreadySelected = event.color.toLowerCase() === color.toLowerCase();
 
-            if (isAlreadySelected) {
-              editor.click();
-              return;
-            }
-
-            updateEventColor(event.id, color);
-          });
-
-          editor.addEventListener("input", () => {
-            replacePaletteColor(color, editor.value, { eventId: event.id });
-          });
-
-          miniWrap.append(menuButton, editor);
-          menu.appendChild(miniWrap);
-        });
-
-        const oneTimeColor = document.createElement("label");
-        oneTimeColor.className = "mini-custom-color-box";
-        oneTimeColor.style.setProperty("--mini-custom-preview", event.color);
-        oneTimeColor.setAttribute("aria-label", "일회용 색상 만들기");
-
-        const oneTimeInput = document.createElement("input");
-        oneTimeInput.type = "color";
-        oneTimeInput.value = event.color;
-
-        const plus = document.createElement("span");
-        plus.textContent = "+";
-        plus.setAttribute("aria-hidden", "true");
-
-        oneTimeInput.addEventListener("input", () => {
-          oneTimeColor.style.setProperty("--mini-custom-preview", oneTimeInput.value);
-          updateEventColor(event.id, oneTimeInput.value);
-        });
-
-        oneTimeColor.append(oneTimeInput, plus);
-        menu.appendChild(oneTimeColor);
-
-        colorWrap.appendChild(menu);
+      if (isAlreadySelected) {
+        editor.click();
+        return;
       }
+
+      updateEventColor(event.id, color);
+    });
+
+    editor.addEventListener("input", () => {
+      replacePaletteColor(color, editor.value, { eventId: event.id });
+    });
+
+    miniWrap.append(menuButton, editor);
+    menu.appendChild(miniWrap);
+  });
+
+  const oneTimeColor = document.createElement("label");
+  oneTimeColor.className = "mini-custom-color-box";
+  oneTimeColor.style.setProperty("--mini-custom-preview", event.color);
+  oneTimeColor.setAttribute("aria-label", "일회용 색상 만들기");
+
+  const oneTimeInput = document.createElement("input");
+  oneTimeInput.type = "color";
+  oneTimeInput.value = event.color;
+
+  const plus = document.createElement("span");
+  plus.textContent = "+";
+  plus.setAttribute("aria-hidden", "true");
+
+  oneTimeInput.addEventListener("input", () => {
+    oneTimeColor.style.setProperty("--mini-custom-preview", oneTimeInput.value);
+    updateEventColor(event.id, oneTimeInput.value);
+  });
+
+  oneTimeColor.append(oneTimeInput, plus);
+  menu.appendChild(oneTimeColor);
+
+  colorWrap.appendChild(menu);
+}
 
       const titleEdit = document.createElement("input");
       titleEdit.type = "text";
@@ -772,31 +766,8 @@ function renderEventList() {
         if (keyboardEvent.key === "Enter") endEdit.blur();
       });
 
-      // ──────────────────────────────────────────────────
-      // [새로 추가된 로직] 목록 전용 개별 삭제 버튼 생성
-      // ──────────────────────────────────────────────────
-      const rowDeleteButton = document.createElement("button");
-      rowDeleteButton.type = "button";
-      rowDeleteButton.className = "list-delete-button";
-      rowDeleteButton.textContent = "×"; 
-      rowDeleteButton.setAttribute("aria-label", "일정 삭제");
-
-      rowDeleteButton.addEventListener("click", (e) => {
-        e.stopPropagation(); // 행 선택 이벤트가 겹쳐서 작동하는 것 방지
-        
-        // 실수로 누르는 걸 방지하기 위해 확인창 띄우기
-        if (confirm(`'${event.title || "새 일정"}' 일정을 삭제할까?`)) {
-          events = events.filter((item) => item.id !== event.id);
-          saveEvents();
-          resetForm();
-        }
-      });
-      // ──────────────────────────────────────────────────
-
       timeEditor.append(startEdit, dash, endEdit);
-      
-      // 맨 오른쪽에 삭제 버튼이 들어가도록 추가해줌
-      item.append(colorWrap, titleEdit, timeEditor, rowDeleteButton); 
+      item.append(colorWrap, titleEdit, timeEditor);
       eventList.appendChild(item);
     });
 }
@@ -898,102 +869,6 @@ function removeSelected() {
 
   saveEvents();
   resetForm();
-}
-
-// 이미지(PNG) & PDF 파일 내보내기 핵심 로직
-function loadScript(url) {
-  return new Promise((resolve, reject) => {
-    if (window.jspdf) { resolve(); return; }
-    const script = document.createElement("script");
-    script.src = url;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("라이브러리 로드 실패"));
-    document.head.appendChild(script);
-  });
-}
-
-async function exportPlanner(type = 'png') {
-  const clonedSvg = svg.cloneNode(true);
-  const styleEl = document.createElementNS("http://www.w3.org/2000/svg", "style");
-  let cssStyles = "";
-  for (const sheet of document.styleSheets) {
-    try {
-      const rules = sheet.cssRules || sheet.rules;
-      if (!rules) continue;
-      for (const rule of rules) {
-        cssStyles += rule.cssText + "\n";
-      }
-    } catch (e) {}
-  }
-  styleEl.textContent = cssStyles;
-  clonedSvg.insertBefore(styleEl, clonedSvg.firstChild);
-
-  const viewBox = svg.viewBox.baseVal;
-  const width = viewBox.width || svg.getBoundingClientRect().width || 600;
-  const height = viewBox.height || svg.getBoundingClientRect().height || 600;
-  clonedSvg.setAttribute("width", width);
-  clonedSvg.setAttribute("height", height);
-
-  const svgString = new XMLSerializer().serializeToString(clonedSvg);
-  const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-  const blobUrl = URL.createObjectURL(svgBlob);
-
-  const img = new Image();
-  img.src = blobUrl;
-  
-  await new Promise((resolve) => { img.onload = resolve; });
-
-  const canvas = document.createElement("canvas");
-  const scale = 2; 
-  canvas.width = width * scale;
-  canvas.height = height * scale;
-  
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#ffffff"; 
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.scale(scale, scale);
-  ctx.drawImage(img, 0, 0, width, height);
-  
-  URL.revokeObjectURL(blobUrl);
-
-  const dateStr = dateInput.value || todayValue();
-  const fileName = `스케줄표_${dateStr}`;
-
-  if (type === 'png') {
-    const imageData = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    link.href = imageData;
-    link.download = `${fileName}.png`;
-    link.click();
-  } else if (type === 'pdf') {
-    try {
-      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
-      const { jsPDF } = window.jspdf;
-      
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4"
-      });
-      
-      const imgData = canvas.toDataURL("image/png");
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      
-      const printWidth = 160; 
-      const printHeight = (height / width) * printWidth;
-      const x = (pageWidth - printWidth) / 2;
-      const y = 40; 
-      
-      pdf.setFontSize(16);
-      pdf.text(`${dateStr} 하루 원판 시간표`, pageWidth / 2, 25, { align: "center" });
-      
-      pdf.addImage(imgData, "PNG", x, y, printWidth, printHeight);
-      pdf.save(`${fileName}.pdf`);
-    } catch (err) {
-      console.error("PDF 생성 실패:", err);
-      alert("PDF 저장 중 문제가 발생했어. 인터넷 연결을 확인해줘!");
-    }
-  }
 }
 
 svg.addEventListener("pointerdown", (event) => {
@@ -1125,13 +1000,6 @@ endInput.addEventListener("change", () => {
     renderPlannerOnly();
   }
 });
-
-if (exportPngButton) {
-  exportPngButton.addEventListener("click", () => exportPlanner("png"));
-}
-if (exportPdfButton) {
-  exportPdfButton.addEventListener("click", () => exportPlanner("pdf"));
-}
 
 loadCustomColors();
 const urlDate = new URLSearchParams(window.location.search).get("date");
